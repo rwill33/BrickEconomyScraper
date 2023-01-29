@@ -1,20 +1,58 @@
 from bs4 import BeautifulSoup
 import requests
 from csv import writer
+from multiprocessing import Pool
+import time
+import tqdm
 
-html_text = requests.get('https://www.brickeconomy.com/sets/retiring-soon').text
-soup = BeautifulSoup(html_text, 'lxml')
-sets = soup.find_all("td", class_ = 'ctlsets-left')
-results = []
-for set in sets:
-  results.append(set.find('a')['href'])
+def multi_process():
+  html_text = requests.get('https://www.brickeconomy.com/sets/retiring-soon').text
+  soup = BeautifulSoup(html_text, 'lxml')
+  sets = soup.find_all("td", class_ = 'ctlsets-left')
+  results = []
+  for set in sets:
+    results.append(set.find('a')['href'])
 
-with open('retiring.csv', 'w', encoding='utf8', newline='') as f:
-  fileWriter = writer(f)
-  header = ['Set number', 'Name', 'Theme', 'Subtheme', 'Released', 'Market price', 'Retail price', 'Retirement', 'Retirement pop', 'Annual growth (first year)', 'Annual growth (second year']
-  fileWriter.writerow(header)
+  if __name__ == '__main__':
+    print("Extracting Data...")
+    all_info = []
+    with Pool(processes=4) as pool, tqdm.tqdm(total=len(results)) as pbar:
+      all_data = []
+      for data in pool.imap_unordered(get_data, results): 
+        all_data.extend(data)
+        pbar.update()
 
-  for result in results:
+    with open('retiring.csv', 'w', encoding='utf8', newline='') as f:
+      fileWriter = writer(f)
+      header = ['Set number', 'Name', 'Theme', 'Subtheme', 'Released', 'Market price', 'Retail price', 'Retirement', 'Retirement pop', 'Annual growth (first year)', 'Annual growth (second year']
+      fileWriter.writerow(header)
+      
+      for info in all_info:
+        fileWriter.writerow(info)
+    print("Saved Data To CSV!")
+
+def single_process():
+  html_text = requests.get('https://www.brickeconomy.com/sets/retiring-soon').text
+  soup = BeautifulSoup(html_text, 'lxml')
+  sets = soup.find_all("td", class_ = 'ctlsets-left')
+  results = []
+  for set in sets:
+    results.append(set.find('a')['href'])
+
+  with open('retiring.csv', 'w', encoding='utf8', newline='') as f:
+    fileWriter = writer(f)
+    header = ['Set number', 'Name', 'Theme', 'Subtheme', 'Released', 'Market price', 'Retail price', 'Retirement', 'Retirement pop', 'Annual growth (first year)', 'Annual growth (second year']
+    fileWriter.writerow(header)
+    print("Extracting Data...")
+    with tqdm.tqdm(total=len(results)) as pbar:
+      for result in results:
+        info = get_data(result)
+        fileWriter.writerow(info)
+        pbar.update()
+  print("Saved Data To CSV!")
+
+
+def get_data(result):
     html_text2 = requests.get('https://www.brickeconomy.com' + result).text
     soup = BeautifulSoup(html_text2, 'lxml')
     try:
@@ -64,17 +102,11 @@ with open('retiring.csv', 'w', encoding='utf8', newline='') as f:
       set_annual_growth2 = "unknown"
     
     info = [set_number, set_name, set_theme, set_subtheme, set_release, set_market, set_retail, set_retirement, set_retirementpop, set_annual_growth1, set_annual_growth2]
-    fileWriter.writerow(info)
-    print(set_number)
-    # print(set_name)
-    # print(set_theme)
-    # print(set_subtheme)
-    # print(set_release)
-    # print(set_retail)
-    # print(set_market)
-    # print(set_retirement)
-    # print(set_retirementpop)
-    # print(set_annual_growth1)
-    # print(set_annual_growth2)
-  print("All Done")
+    return info
+
+def main():
+  multi_process()
+  #single_process()
+
+main()
 
