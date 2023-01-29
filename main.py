@@ -2,7 +2,6 @@ from bs4 import BeautifulSoup
 import requests
 from csv import writer
 from multiprocessing import Pool
-import time
 import tqdm
 
 def multi_process():
