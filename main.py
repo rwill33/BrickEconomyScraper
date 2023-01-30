@@ -14,7 +14,6 @@ def multi_process():
 
   if __name__ == '__main__':
     print("Extracting Data...")
-    all_info = []
     with Pool(processes=4) as pool, tqdm.tqdm(total=len(results)) as pbar:
       all_data = []
       for data in pool.imap_unordered(get_data, results): 
