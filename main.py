@@ -18,15 +18,14 @@ def multi_process():
     with Pool(processes=4) as pool, tqdm.tqdm(total=len(results)) as pbar:
       all_data = []
       for data in pool.imap_unordered(get_data, results): 
-        all_data.extend(data)
+        all_data.append(data)
         pbar.update()
 
     with open('retiring.csv', 'w', encoding='utf8', newline='') as f:
       fileWriter = writer(f)
       header = ['Set number', 'Name', 'Theme', 'Subtheme', 'Released', 'Market price', 'Retail price', 'Retirement', 'Retirement pop', 'Annual growth (first year)', 'Annual growth (second year']
       fileWriter.writerow(header)
-      
-      for info in all_info:
+      for info in all_data:
         fileWriter.writerow(info)
     print("Saved Data To CSV!")
 
@@ -105,7 +104,7 @@ def get_data(result):
 
 def main():
   multi_process()
-  #single_process()
+  # single_process()
 
 main()
 
